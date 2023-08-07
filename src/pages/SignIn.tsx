@@ -1,11 +1,10 @@
-import React from "react";
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const BASE_URL = "https://www.pre-onboarding-selection-task.shop";
 
-const SignUp = () => {
+const SignIn = () => {
   const navigate = useNavigate();
 
   const [disabled, setDisabled] = useState(true);
@@ -30,17 +29,22 @@ const SignUp = () => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const response = await axios.post(`${BASE_URL}/auth/signup`, {
+    const response = await axios.post(`${BASE_URL}/auth/signin`, {
       email,
       password,
     });
-    if (response.status === 201) {
-      navigate("/signin");
+
+    if (response.status === 200) {
+      const token = response.data.access_token as string;
+
+      localStorage.setItem("token", token);
+
+      navigate("/todo");
     }
   };
 
   return (
-    <div id="singUpContainer">
+    <div id="signInContainer">
       <form onSubmit={handleSubmit}>
         <input
           type="text"
@@ -55,15 +59,15 @@ const SignUp = () => {
           name="password"
           placeholder="비밀번호를 입력해주세요"
           value={password}
-          data-testid="password-input"
+          data-testid="signin-button"
           onChange={handlePasswordChange}
         />
         <button type="submit" disabled={disabled} data-testid="signup-button">
-          회원가입
+          로그인
         </button>
       </form>
     </div>
   );
 };
 
-export default SignUp;
+export default SignIn;
