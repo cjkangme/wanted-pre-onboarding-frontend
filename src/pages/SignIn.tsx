@@ -37,7 +37,7 @@ const SignIn = () => {
     if (response.status === 200) {
       const token = response.data.access_token as string;
 
-      localStorage.setItem("token", token);
+      localStorage.setItem("token", `Bearer ${token}`);
 
       navigate("/todo");
     }
