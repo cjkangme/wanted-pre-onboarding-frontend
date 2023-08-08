@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { PublicRouter, PrivateRouter } from "./utils/Router";
 import SignUp from "./pages/SingUp";
 import SignIn from "./pages/SignIn";
+import Todo from "./pages/Todo";
 
 function App() {
   return (
@@ -17,7 +18,7 @@ function App() {
           </Route>
 
           <Route element={<PrivateRouter />}>
-            <Route path="todo" />
+            <Route path="todo" element={<Todo />} />
           </Route>
         </Routes>
       </BrowserRouter>
