@@ -4,6 +4,7 @@ import axios from "axios";
 interface TodoElement {
   id: number;
   todo: string;
+  snapshot: string;
   isCompleted: boolean;
   userId: number;
   isEditing: boolean;
@@ -17,6 +18,20 @@ const Todo = () => {
   const [todoList, setTodoList] = useState([] as TodoElement[]);
 
   useEffect(() => {
+    const getTodos = async () => {
+      const response = await axios.get(`${BASE_URL}/todos`, {
+        headers: {
+          Authorization: TOKEN,
+        },
+      });
+      // forEach 사용하면 반환값이 없어 에러 발생
+      const todoElements: TodoElement[] = response.data.map(
+        (todoElement: any) => responseToTodoElement(todoElement)
+      );
+
+      setTodoList(todoElements);
+    };
+
     getTodos();
   }, []);
 
@@ -24,6 +39,7 @@ const Todo = () => {
     return {
       id: data.id,
       todo: data.todo,
+      snapshot: data.todo,
       isCompleted: data.isCompleted,
       userId: data.userId,
       isEditing: false,
@@ -44,20 +60,6 @@ const Todo = () => {
     );
 
     return responseToTodoElement(response.data);
-  };
-
-  const getTodos = async () => {
-    const response = await axios.get(`${BASE_URL}/todos`, {
-      headers: {
-        Authorization: TOKEN,
-      },
-    });
-    // forEach 사용하면 반환값이 없어 에러 발생
-    const todoElements: TodoElement[] = response.data.map((todoElement: any) =>
-      responseToTodoElement(todoElement)
-    );
-
-    setTodoList(todoElements);
   };
 
   const updateTodos = async (
@@ -127,6 +129,13 @@ const Todo = () => {
 
   // Todo 내용 수정 취소 버튼을 클릭했을 때, 원래대로 되돌리는 함수
   const handleClickCancleButton = (event: React.MouseEvent<HTMLElement>) => {
+    const idx = event.currentTarget.dataset.idx;
+    if (idx === undefined) {
+      return;
+    }
+    const newTodoList = todoList;
+    newTodoList[parseInt(idx)].todo = newTodoList[parseInt(idx)].snapshot;
+    setTodoList([...newTodoList]);
     toggleIsEditing(parseInt(event.currentTarget.dataset.idx!));
   };
 
