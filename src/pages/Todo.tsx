@@ -16,6 +16,7 @@ const TOKEN = localStorage.getItem("token")!; // PrivateRouter를 통해 체킹�
 const Todo = () => {
   const [todoText, setTodoText] = useState("");
   const [todoList, setTodoList] = useState([] as TodoElement[]);
+  const [currentIndex, setCurrentIndex] = useState(-1);
 
   useEffect(() => {
     const getTodos = async () => {
@@ -97,6 +98,21 @@ const Todo = () => {
     }
   };
 
+  // 사용자가 수정버튼을 눌렀을 때 현재 idx를 변경하는 함수
+  const changeIndex = (idx: number): boolean => {
+    if (currentIndex === -1) {
+      setCurrentIndex(idx);
+      return true;
+    }
+    if (window.confirm("현재 수정 중인 작업을 취소할까요?")) {
+      handleClickCancleButton(currentIndex);
+      setCurrentIndex(idx);
+      return true;
+    } else {
+      return false;
+    }
+  };
+
   // todoList의 isEditing을 토글하는 함수
   const toggleIsEditing = (idx: number) => {
     const newTodoList = todoList;
@@ -116,27 +132,19 @@ const Todo = () => {
   };
 
   // Todo 내용을 수정했을 때 수정 내용을 서버에 반환하고 수정 불가 상태로 되돌리는 함수
-  const handleClickUpdateButton = (event: React.MouseEvent<HTMLElement>) => {
-    const previousSibling = event.currentTarget.previousElementSibling!;
+  const handleClickUpdateButton = (idx: number) => {
+    const todoElement = todoList[idx];
 
-    if (previousSibling instanceof HTMLElement && previousSibling.dataset.idx) {
-      const todoElement = todoList[parseInt(previousSibling.dataset.idx)];
-
-      updateTodos(todoElement.id, todoElement.todo, todoElement.isCompleted);
-      toggleIsEditing(parseInt(previousSibling.dataset.idx));
-    }
+    updateTodos(todoElement.id, todoElement.todo, todoElement.isCompleted);
+    toggleIsEditing(idx);
   };
 
   // Todo 내용 수정 취소 버튼을 클릭했을 때, 원래대로 되돌리는 함수
-  const handleClickCancleButton = (event: React.MouseEvent<HTMLElement>) => {
-    const idx = event.currentTarget.dataset.idx;
-    if (idx === undefined) {
-      return;
-    }
+  const handleClickCancleButton = (idx: number) => {
     const newTodoList = todoList;
-    newTodoList[parseInt(idx)].todo = newTodoList[parseInt(idx)].snapshot;
+    newTodoList[idx].todo = newTodoList[idx].snapshot;
     setTodoList([...newTodoList]);
-    toggleIsEditing(parseInt(event.currentTarget.dataset.idx!));
+    toggleIsEditing(idx);
   };
 
   // TodoList의 삭제 버튼을 눌렀을 때 해당 요소를 삭제하고 서버에 반영하는 함수
@@ -150,22 +158,21 @@ const Todo = () => {
     setTodoList([...newTodoList]);
   };
 
-  // Todo 수정 버튼을 눌렀을 때 isEditing 함수로 바꿔주는 함수
-  const handelClickEditButton = (event: React.MouseEvent<HTMLElement>) => {
-    toggleIsEditing(parseInt(event.currentTarget.dataset.idx!));
-  };
-
   // TodoList의 체크박스를 클릭할 때 서버에 반영하는 함수
-  const handleChangeCheckbox = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const todoElment =
-      todoList[parseInt(event.target.parentElement!.dataset.idx!)];
+  const handleChangeCheckbox = (
+    idx: number,
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const todoElment = todoList[idx];
     updateTodos(todoElment.id, todoElment.todo, event.target.checked);
   };
 
-  const handleEditTodoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEditTodoChange = (
+    idx: number,
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const newTodoList = todoList;
-    newTodoList[parseInt(event.target.parentElement!.dataset.idx!)].todo =
-      event.target.value;
+    newTodoList[idx].todo = event.target.value;
 
     setTodoList([...newTodoList]);
   };
@@ -189,15 +196,20 @@ const Todo = () => {
             return (
               <li key={idx}>
                 <label data-idx={idx}>
-                  <input type="checkbox" onChange={handleChangeCheckbox} />
+                  <input
+                    type="checkbox"
+                    onChange={(event) => handleChangeCheckbox(idx, event)}
+                  />
                   <input
                     type="text"
                     value={todoElement.todo}
-                    onChange={handleEditTodoChange}
+                    onChange={(event) => handleEditTodoChange(idx, event)}
                   />
                 </label>
-                <button onClick={handleClickUpdateButton}>제출</button>
-                <button onClick={handleClickCancleButton} data-idx={idx}>
+                <button onClick={() => handleClickUpdateButton(idx)}>
+                  제출
+                </button>
+                <button onClick={() => handleClickCancleButton(idx)}>
                   취소
                 </button>
               </li>
@@ -206,13 +218,19 @@ const Todo = () => {
             return (
               <li key={idx}>
                 <label data-idx={idx}>
-                  <input type="checkbox" onChange={handleChangeCheckbox} />
+                  <input
+                    type="checkbox"
+                    onChange={(event) => handleChangeCheckbox(idx, event)}
+                  />
                   <span>{todoElement.todo}</span>
                 </label>
                 <button
                   data-testid="modify-button"
-                  onClick={handelClickEditButton}
-                  data-idx={idx}
+                  onClick={() => {
+                    if (changeIndex(idx)) {
+                      toggleIsEditing(idx);
+                    }
+                  }}
                 >
                   수정
                 </button>
